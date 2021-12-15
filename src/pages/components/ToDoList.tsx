@@ -8,6 +8,7 @@ import {
   TextStyle,
   Pressable,
   Alert,
+  Vibration,
 } from 'react-native';
 import {useRecoilValue, useSetRecoilState} from 'recoil';
 import {ErrorBoundary} from 'react-error-boundary';
@@ -46,8 +47,8 @@ const _TodoList: FC<ToDoListProps> = ({navigation}) => {
           ? styles.listContentEmpty
           : {
               ...styles.listContent,
-              paddingTop: vh(15),
-              paddingHorizontal: hw(5),
+              paddingVertical: vh(15),
+              paddingHorizontal: hw(10),
             },
       ]}
       ItemSeparatorComponent={() => <View style={styles.listItemSeparator} />}
@@ -71,9 +72,10 @@ const _TodoList: FC<ToDoListProps> = ({navigation}) => {
             navigation.navigate('addTodos', {...item});
           }}
           onLongPress={() => {
+            Vibration.vibrate(100);
             Alert.alert(
               'Delete',
-              `Are you sure you want to delete record ${item._id}?`,
+              `Do you want to delete the record ${item._id}?`,
               [
                 {
                   text: 'Cancel',
