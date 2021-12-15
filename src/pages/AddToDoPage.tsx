@@ -1,12 +1,18 @@
 import React, {FC} from 'react';
 import {StyleSheet, ViewStyle} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+
+import {RootStackParams} from '@src/configs';
 import {ToDoForm} from './components/ToDoForm';
 
-export type AddTodoPageProps = {};
-export const AddTodoPage: FC<AddTodoPageProps> = () => (
+export type AddTodoPageProps = {} & NativeStackScreenProps<
+  RootStackParams,
+  'addTodos'
+>;
+export const AddTodoPage: FC<AddTodoPageProps> = ({route, navigation}) => (
   <SafeAreaView style={styles.container}>
-    <ToDoForm />
+    <ToDoForm route={route} navigation={navigation} />
   </SafeAreaView>
 );
 

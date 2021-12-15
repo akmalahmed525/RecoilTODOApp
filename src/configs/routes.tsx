@@ -6,10 +6,11 @@ import {scaleHeight, scaleWidth} from '@src/utils';
 import {todos, TodoPage, addTodos, AddTodoPage} from '@src/pages';
 import {AppBarIcon} from '@src/components';
 import {plus, leftArrow} from '@src/components/svgs';
+import {AppToDo} from '@src/state';
 
 export type RootStackParams = {
   todos: undefined;
-  addTodos: undefined;
+  addTodos: AppToDo | undefined;
 };
 
 const RootStack = createNativeStackNavigator<RootStackParams>();

@@ -6,22 +6,30 @@ import {
   ViewStyle,
   useWindowDimensions,
   TextStyle,
+  Pressable,
+  Alert,
 } from 'react-native';
 import {useRecoilValue, useSetRecoilState} from 'recoil';
 import {ErrorBoundary} from 'react-error-boundary';
 import LottieView from 'lottie-react-native';
 import {FlatList} from 'react-native-gesture-handler';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import moment from 'moment';
 
 import {todoFilter, todoAction} from '@src/state';
 import {scaleHeight, scaleWidth} from '@src/utils';
+import type {RootStackParams} from '@src/configs';
 
-export type ToDoListProps = {};
+export type ToDoListProps = {} & NativeStackScreenProps<
+  RootStackParams,
+  'todos'
+>;
 
 const emptyAnimation = require('../../components/lottie/51382-astronaut-light-theme.json');
 const loadingAnimation = require('../../components/lottie/lf30_editor_2bcya7fr.json');
 const errorAnimation = require('../../components/lottie/38213-error.json');
 
-const _TodoList: FC<ToDoListProps> = () => {
+const _TodoList: FC<ToDoListProps> = ({navigation}) => {
   const {height, width} = useWindowDimensions();
   const vh = scaleHeight(height);
   const hw = scaleWidth(width);
@@ -42,6 +50,7 @@ const _TodoList: FC<ToDoListProps> = () => {
               paddingHorizontal: hw(5),
             },
       ]}
+      ItemSeparatorComponent={() => <View style={styles.listItemSeparator} />}
       ListEmptyComponent={
         <View style={styles.container}>
           <LottieView
@@ -57,14 +66,46 @@ const _TodoList: FC<ToDoListProps> = () => {
         </View>
       }
       renderItem={({item}) => (
-        <View style={styles.listItem}>
+        <Pressable
+          onPress={() => {
+            navigation.navigate('addTodos', {...item});
+          }}
+          onLongPress={() => {
+            Alert.alert(
+              'Delete',
+              `Are you sure you want to delete record ${item._id}?`,
+              [
+                {
+                  text: 'Cancel',
+                  onPress: () => {},
+                  style: 'cancel',
+                },
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    actionState({
+                      action: 'DELETE',
+                      data: {
+                        ...item,
+                      },
+                    });
+                  },
+                },
+              ],
+            );
+          }}
+          style={styles.listItem}>
+          <Text style={[styles.listItemTimeStamp, {fontSize: vh(12)}]}>
+            {moment(item.updatedAt * 1000).format('MM ddd, YYYY HH:mm:ss a')}
+          </Text>
+          <View style={styles.underline} />
           <Text style={[styles.listItemTitle, {fontSize: vh(20)}]}>
             {item.title}
           </Text>
-          <Text style={[styles.listItemSubtitle, {fontSize: vh(12)}]}>
+          <Text style={[styles.listItemSubtitle, {fontSize: vh(15)}]}>
             {item.description}
           </Text>
-        </View>
+        </Pressable>
       )}
     />
   );
@@ -116,8 +157,11 @@ type ToDoListStyles = {
   infoText: TextStyle;
   listInfoSpacing: ViewStyle;
   listItem: ViewStyle;
+  listItemTimeStamp: TextStyle;
   listItemTitle: TextStyle;
   listItemSubtitle: TextStyle;
+  listItemSeparator: ViewStyle;
+  underline: ViewStyle;
 };
 const styles = StyleSheet.create<ToDoListStyles>({
   container: {
@@ -156,5 +200,17 @@ const styles = StyleSheet.create<ToDoListStyles>({
   listItemSubtitle: {
     fontFamily: 'Poppins-Regular',
     color: '#808080',
+  },
+  listItemSeparator: {
+    height: 8,
+  },
+  listItemTimeStamp: {
+    fontFamily: 'Poppins-Regular',
+    color: '#000000',
+  },
+  underline: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#0A0A0A',
+    marginVertical: 5,
   },
 });

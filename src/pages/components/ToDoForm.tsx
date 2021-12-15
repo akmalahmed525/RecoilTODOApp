@@ -1,4 +1,4 @@
-import React, {FC, Suspense} from 'react';
+import React, {FC} from 'react';
 import {
   StyleSheet,
   View,
@@ -7,16 +7,15 @@ import {
   TextStyle,
   Pressable,
   Text,
-  useWindowDimensions,
 } from 'react-native';
+import * as Yup from 'yup';
 import {useSetRecoilState} from 'recoil';
 import {Formik} from 'formik';
-import * as Yup from 'yup';
-import {ErrorBoundary} from 'react-error-boundary';
-import LottieView from 'lottie-react-native';
+import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import moment from 'moment';
 
-import {scaleHeight, scaleWidth} from '@src/utils';
 import {todoAction} from '@src/state';
+import {RootStackParams} from '@src/configs';
 
 const todoSchema = Yup.object().shape({
   title: Yup.string()
@@ -26,20 +25,41 @@ const todoSchema = Yup.object().shape({
   description: Yup.string().optional(),
 });
 
-export type ToDoFormProps = {};
-const _ToDoForm: FC<ToDoFormProps> = () => {
+export type ToDoFormProps = {} & NativeStackScreenProps<
+  RootStackParams,
+  'addTodos'
+>;
+export const ToDoForm: FC<ToDoFormProps> = ({route, navigation}) => {
   const actionState = useSetRecoilState(todoAction);
+
+  const initialData = route.params
+    ? route.params
+    : {title: '', description: ''};
 
   return (
     <>
       <Formik
-        initialValues={{title: '', description: ''}}
+        enableReinitialize
+        initialValues={initialData}
         validationSchema={todoSchema}
         onSubmit={values => {
+          const action = route.params ? 'UPDATE' : 'CREATE';
+          const data = route.params
+            ? {
+                ...route.params,
+                ...values,
+                updatedAt: moment().unix(),
+              }
+            : {
+                title: values.title,
+                description: values.description,
+                updatedAt: moment().unix(),
+              };
           actionState({
-            action: 'CREATE',
-            data: {title: values.title, description: values.description},
+            action,
+            data,
           });
+          navigation.goBack();
         }}>
         {({handleChange, handleBlur, handleSubmit, values, errors}) => (
           <>
@@ -69,54 +89,14 @@ const _ToDoForm: FC<ToDoFormProps> = () => {
             </View>
 
             <Pressable style={styles.submitButton} onPress={handleSubmit}>
-              <Text style={styles.submitButtonText}>Save TODO</Text>
+              <Text style={styles.submitButtonText}>
+                {route.params ? 'Update TODO 💾' : 'Save TODO 💾'}
+              </Text>
             </Pressable>
           </>
         )}
       </Formik>
     </>
-  );
-};
-
-const loadingAnimation = require('../../components/lottie/lf30_editor_raxsgauq.json');
-const errorAnimation = require('../../components/lottie/38213-error.json');
-
-export const ToDoForm: FC<ToDoFormProps> = ({...props}) => {
-  const {height, width} = useWindowDimensions();
-  const vh = scaleHeight(height);
-  const hw = scaleWidth(width);
-  return (
-    <ErrorBoundary
-      FallbackComponent={() => (
-        <View style={styles.container}>
-          <LottieView
-            source={errorAnimation}
-            autoPlay
-            resizeMode="cover"
-            style={{width: hw(300)}}
-          />
-          <Text style={[styles.infoText, {fontSize: vh(20)}]}>
-            Failed to load the form
-          </Text>
-        </View>
-      )}>
-      <Suspense
-        fallback={
-          <View style={styles.container}>
-            <LottieView
-              source={loadingAnimation}
-              autoPlay
-              resizeMode="cover"
-              style={{width: hw(300)}}
-            />
-            <Text style={[styles.infoText, {fontSize: vh(20)}]}>
-              Processing TODO record
-            </Text>
-          </View>
-        }>
-        <_ToDoForm {...props} />
-      </Suspense>
-    </ErrorBoundary>
   );
 };
 
@@ -128,7 +108,6 @@ type AddTodoPageStyles = {
   submitButton: ViewStyle;
   submitButtonText: TextStyle;
   errorText: TextStyle;
-  infoText: TextStyle;
 };
 const styles = StyleSheet.create<AddTodoPageStyles>({
   container: {
@@ -151,7 +130,7 @@ const styles = StyleSheet.create<AddTodoPageStyles>({
     paddingHorizontal: 10,
   },
   submitButton: {
-    backgroundColor: '#808080',
+    backgroundColor: '#0A0A0A',
     marginHorizontal: 10,
     paddingVertical: 10,
     borderRadius: 5,
@@ -172,9 +151,5 @@ const styles = StyleSheet.create<AddTodoPageStyles>({
   errorText: {
     color: '#FF0000',
     fontFamily: 'Poppins-Regular',
-  },
-  infoText: {
-    fontFamily: 'Poppins-Regular',
-    color: '#000000',
   },
 });
