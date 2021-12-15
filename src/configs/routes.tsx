@@ -49,7 +49,7 @@ export const AppRoot: FC<{}> = () => {
         name={todos}
         component={TodoPage}
         options={({navigation}) => ({
-          title: 'Todos',
+          title: 'TODOs 🖊️',
           headerRight: () => (
             <AppBarIcon
               xml={plus}
@@ -62,7 +62,7 @@ export const AppRoot: FC<{}> = () => {
         name={addTodos}
         component={AddTodoPage}
         options={({navigation}) => ({
-          title: 'New Todo',
+          title: 'New TODO 🎉',
           headerLeft: () => (
             <AppBarIcon
               xml={leftArrow}
