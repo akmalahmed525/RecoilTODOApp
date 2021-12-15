@@ -1,4 +1,4 @@
-import React, {FC, Suspense} from 'react';
+import React, {FC, Suspense, useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -16,6 +16,14 @@ import LottieView from 'lottie-react-native';
 import {FlatList} from 'react-native-gesture-handler';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import moment from 'moment';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+  withRepeat,
+  cancelAnimation,
+} from 'react-native-reanimated';
 
 import {todoFilter, todoAction} from '@src/state';
 import {scaleHeight, scaleWidth} from '@src/utils';
@@ -35,9 +43,17 @@ const _TodoList: FC<ToDoListProps> = ({navigation}) => {
   const vh = scaleHeight(height);
   const hw = scaleWidth(width);
 
+  const [pressedItem, setPressedItem] = useState<number>(0);
   const actionState = useSetRecoilState(todoAction);
   const todoData = useRecoilValue(todoFilter);
 
+  const rotation = useSharedValue(0);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{rotateZ: `${rotation.value}deg`}],
+    };
+  });
   return (
     <FlatList
       data={todoData}
@@ -66,48 +82,60 @@ const _TodoList: FC<ToDoListProps> = ({navigation}) => {
           </Text>
         </View>
       }
-      renderItem={({item}) => (
-        <Pressable
-          onPress={() => {
-            navigation.navigate('addTodos', {...item});
-          }}
-          onLongPress={() => {
-            Vibration.vibrate(100);
-            Alert.alert(
-              'Delete',
-              `Do you want to delete the record ${item._id}?`,
-              [
-                {
-                  text: 'Cancel',
-                  onPress: () => {},
-                  style: 'cancel',
-                },
-                {
-                  text: 'OK',
-                  onPress: () => {
-                    actionState({
-                      action: 'DELETE',
-                      data: {
-                        ...item,
-                      },
-                    });
+      renderItem={({item, index}) => (
+        <Animated.View style={pressedItem === index ? animatedStyle : {}}>
+          <Pressable
+            onPressIn={() => {
+              setPressedItem(index);
+            }}
+            onPress={() => {
+              navigation.navigate('addTodos', {...item});
+            }}
+            onLongPress={() => {
+              Vibration.vibrate(100);
+              rotation.value = withSequence(
+                withTiming(-2, {duration: 50}),
+                withRepeat(withTiming(5, {duration: 100}), 6, true),
+                withTiming(0, {duration: 50}),
+              );
+              Alert.alert(
+                'Delete',
+                `Do you want to delete the record ${item._id}?`,
+                [
+                  {
+                    text: 'Cancel',
+                    onPress: () => {
+                      cancelAnimation(rotation);
+                    },
+                    style: 'cancel',
                   },
-                },
-              ],
-            );
-          }}
-          style={styles.listItem}>
-          <Text style={[styles.listItemTimeStamp, {fontSize: vh(12)}]}>
-            {moment(item.updatedAt * 1000).format('MM ddd, YYYY HH:mm:ss a')}
-          </Text>
-          <View style={styles.underline} />
-          <Text style={[styles.listItemTitle, {fontSize: vh(20)}]}>
-            {item.title}
-          </Text>
-          <Text style={[styles.listItemSubtitle, {fontSize: vh(15)}]}>
-            {item.description}
-          </Text>
-        </Pressable>
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      actionState({
+                        action: 'DELETE',
+                        data: {
+                          ...item,
+                        },
+                      });
+                    },
+                  },
+                ],
+              );
+            }}
+            style={styles.listItem}>
+            <Text style={[styles.listItemTimeStamp, {fontSize: vh(12)}]}>
+              {moment(item.updatedAt * 1000).format('MM ddd, YYYY HH:mm:ss a')}
+            </Text>
+            <View style={styles.underline} />
+            <Text style={[styles.listItemTitle, {fontSize: vh(20)}]}>
+              {item.title}
+            </Text>
+            <Text style={[styles.listItemSubtitle, {fontSize: vh(15)}]}>
+              {item.description}
+            </Text>
+          </Pressable>
+        </Animated.View>
       )}
     />
   );
